@@ -91,7 +91,7 @@ export default function KDSOrderTicket({ order }) {
           <span className="font-bold text-gray-900 text-sm">SR{total}</span>
         </div>
         <button
-          onClick={() => advanceOrderStatus(order.id)}
+          onClick={() => advanceOrderStatus(order.id, order.firebaseKey)}
           className={`
             w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
             active:scale-95 ${config.actionClass}

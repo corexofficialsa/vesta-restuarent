@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { CURRENCY, CATEGORY_META } from '../../data/menuData';
 
 export default function MenuCard({ item }) {
   const { activeTable, addToCart, getTableCart, updateQty } = useRestaurant();
+  const { t, lang } = useLanguage();
   const [imgError, setImgError] = useState(false);
   const [ripple, setRipple] = useState(false);
 
@@ -12,6 +14,9 @@ export default function MenuCard({ item }) {
   const qty = cartItem?.qty || 0;
 
   const meta = CATEGORY_META[item.category] || { gradient: 'from-gray-100 to-gray-200', icon: '☕' };
+  const displayName = lang === 'ar' ? (item.nameAr || item.name) : item.name;
+  const displayDesc = lang === 'ar' ? (item.descriptionAr || item.description) : item.description;
+  const displayCategory = t(item.category);
 
   const handleAdd = () => {
     addToCart(activeTable, item);
@@ -26,7 +31,7 @@ export default function MenuCard({ item }) {
         {!imgError ? (
           <img
             src={item.image}
-            alt={item.name}
+            alt={displayName}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={() => setImgError(true)}
           />
@@ -36,17 +41,14 @@ export default function MenuCard({ item }) {
           </div>
         )}
 
-        {/* Gradient overlay for text legibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
-        {/* Category badge */}
         <div className="absolute top-3 left-3">
           <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-purple-700 text-[10px] font-bold rounded-full shadow-sm uppercase tracking-wide">
-            {item.category}
+            {displayCategory}
           </span>
         </div>
 
-        {/* Qty badge */}
         {qty > 0 && (
           <div className="absolute top-3 right-3 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg animate-bounce-in">
             {qty}
@@ -57,16 +59,15 @@ export default function MenuCard({ item }) {
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h3 className="font-bold text-gray-900 text-sm leading-snug">{item.name}</h3>
+          <h3 className="font-bold text-gray-900 text-sm leading-snug">{displayName}</h3>
           <span className="text-purple-700 font-bold text-sm whitespace-nowrap flex-shrink-0">
             {CURRENCY} {item.price}
           </span>
         </div>
         <p className="text-gray-400 text-xs leading-relaxed flex-1 mb-4 line-clamp-2">
-          {item.description}
+          {displayDesc}
         </p>
 
-        {/* Controls */}
         {qty === 0 ? (
           <button
             onClick={handleAdd}
@@ -82,7 +83,7 @@ export default function MenuCard({ item }) {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
-              Add to Order
+              {t('addToOrder')}
             </span>
           </button>
         ) : (
@@ -90,16 +91,12 @@ export default function MenuCard({ item }) {
             <button
               onClick={() => updateQty(activeTable, item.id, -1)}
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-lg transition-colors active:scale-90"
-            >
-              −
-            </button>
+            >−</button>
             <span className="text-white font-bold text-sm px-3">{qty}</span>
             <button
               onClick={handleAdd}
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-lg transition-colors active:scale-90"
-            >
-              +
-            </button>
+            >+</button>
           </div>
         )}
       </div>

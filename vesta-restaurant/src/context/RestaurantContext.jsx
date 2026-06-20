@@ -1,13 +1,17 @@
-import { createContext, useContext, useReducer, useCallback, useRef, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect } from 'react';
+import { ref, push, update, onValue } from 'firebase/database';
+import { db } from '../firebase';
 import { INITIAL_MENU } from '../data/menuData';
+
+const savedAuth = localStorage.getItem('vesta_auth') === 'true';
 
 const initialState = {
   menu: INITIAL_MENU,
   cart: {},
   orders: [],
   activeTable: null,
-  view: 'customer',
-  isAuthenticated: false,
+  view: savedAuth ? 'admin' : 'customer',
+  isAuthenticated: savedAuth,
 };
 
 function reducer(state, action) {
@@ -50,54 +54,17 @@ function reducer(state, action) {
       return { ...state, cart: { ...state.cart, [tableId]: { items: updatedItems } } };
     }
 
-    case 'PLACE_ORDER': {
-      const { tableId, order } = action.payload;
-      // If the order object is pre-built (coming from another tab), use it directly
-      if (order) {
-        return {
-          ...state,
-          orders: [order, ...state.orders],
-          cart: { ...state.cart, [tableId]: { items: [] } },
-        };
-      }
-      const tableCart = state.cart[tableId] || { items: [] };
-      if (!tableCart.items.length) return state;
-      const newOrder = {
-        id: `ORD-${Date.now()}`,
-        tableId,
-        items: tableCart.items,
-        status: 'Pending',
-        placedAt: new Date().toISOString(),
-      };
-      return {
-        ...state,
-        orders: [newOrder, ...state.orders],
-        cart: { ...state.cart, [tableId]: { items: [] } },
-        _lastOrder: newOrder,
-      };
-    }
+    case 'SET_ORDERS':
+      return { ...state, orders: action.payload };
 
-    case 'ADVANCE_ORDER_STATUS': {
-      const { orderId } = action.payload;
-      const statusFlow = { Pending: 'Cooking', Cooking: 'Ready', Ready: 'Served' };
-      return {
-        ...state,
-        orders: state.orders.map(o =>
-          o.id === orderId ? { ...o, status: statusFlow[o.status] || o.status } : o
-        ),
-      };
+    case 'CLEAR_TABLE_CART': {
+      const { tableId } = action.payload;
+      return { ...state, cart: { ...state.cart, [tableId]: { items: [] } } };
     }
 
     case 'ADD_MENU_ITEM': {
       const newItem = { ...action.payload, id: action.payload.id || Date.now(), price: Number(action.payload.price) };
       return { ...state, menu: [...state.menu, newItem] };
-    }
-
-    case 'SYNC_ORDERS': {
-      // Merge incoming orders from another tab — avoid duplicates by id
-      const existingIds = new Set(state.orders.map(o => o.id));
-      const newOrders = action.payload.filter(o => !existingIds.has(o.id));
-      return { ...state, orders: [...newOrders, ...state.orders] };
     }
 
     default:
@@ -106,55 +73,71 @@ function reducer(state, action) {
 }
 
 const RestaurantContext = createContext(null);
-const CHANNEL_NAME = 'vesta_kitchen_sync';
 
 export function RestaurantProvider({ children }) {
-  const [state, rawDispatch] = useReducer(reducer, initialState);
-  const channelRef = useRef(null);
-  const fromChannelRef = useRef(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Wrapped dispatch — broadcasts cross-tab actions automatically
-  const dispatch = useCallback((action) => {
-    rawDispatch(action);
-    if (!fromChannelRef.current && channelRef.current) {
-      const syncTypes = ['PLACE_ORDER', 'ADVANCE_ORDER_STATUS', 'ADD_MENU_ITEM'];
-      if (syncTypes.includes(action.type)) {
-        channelRef.current.postMessage(action);
-      }
-    }
-  }, []);
-
-  // Setup BroadcastChannel for real cross-tab sync
+  // ── Listen to Firebase orders in real-time ──
   useEffect(() => {
-    channelRef.current = new BroadcastChannel(CHANNEL_NAME);
-    channelRef.current.onmessage = (e) => {
-      fromChannelRef.current = true;
-      rawDispatch(e.data);
-      fromChannelRef.current = false;
-    };
-    return () => channelRef.current?.close();
+    const ordersRef = ref(db, 'vesta/orders');
+    const unsubscribe = onValue(ordersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) { dispatch({ type: 'SET_ORDERS', payload: [] }); return; }
+      const orders = Object.entries(data)
+        .map(([firebaseKey, order]) => ({ ...order, firebaseKey }))
+        .sort((a, b) => new Date(b.placedAt) - new Date(a.placedAt));
+      dispatch({ type: 'SET_ORDERS', payload: orders });
+    });
+    return () => unsubscribe();
   }, []);
 
   const actions = {
     setView: (view) => dispatch({ type: 'SET_VIEW', payload: view }),
+
     login: (username, password) => {
       if (username === 'vesta_rest' && password === 'vesta3223') {
+        localStorage.setItem('vesta_auth', 'true');
         dispatch({ type: 'SET_AUTH', payload: true });
         dispatch({ type: 'SET_VIEW', payload: 'admin' });
         return true;
       }
       return false;
     },
+
     logout: () => {
+      localStorage.removeItem('vesta_auth');
       dispatch({ type: 'SET_AUTH', payload: false });
       dispatch({ type: 'SET_VIEW', payload: 'customer' });
     },
+
     selectTable: (id) => dispatch({ type: 'SELECT_TABLE', payload: id }),
     addToCart: (tableId, item) => dispatch({ type: 'ADD_TO_CART', payload: { tableId, item } }),
     removeFromCart: (tableId, itemId) => dispatch({ type: 'REMOVE_FROM_CART', payload: { tableId, itemId } }),
     updateQty: (tableId, itemId, delta) => dispatch({ type: 'UPDATE_QTY', payload: { tableId, itemId, delta } }),
-    placeOrder: (tableId) => dispatch({ type: 'PLACE_ORDER', payload: { tableId } }),
-    advanceOrderStatus: (orderId) => dispatch({ type: 'ADVANCE_ORDER_STATUS', payload: { orderId } }),
+
+    placeOrder: (tableId) => {
+      const tableCart = state.cart[tableId] || { items: [] };
+      if (!tableCart.items.length) return;
+      const newOrder = {
+        id: `ORD-${Date.now()}`,
+        tableId,
+        items: tableCart.items,
+        status: 'Pending',
+        placedAt: new Date().toISOString(),
+      };
+      push(ref(db, 'vesta/orders'), newOrder);
+      dispatch({ type: 'CLEAR_TABLE_CART', payload: { tableId } });
+    },
+
+    advanceOrderStatus: (orderId, firebaseKey) => {
+      const statusFlow = { Pending: 'Cooking', Cooking: 'Ready', Ready: 'Served' };
+      const order = state.orders.find(o => o.id === orderId);
+      if (!order || !firebaseKey) return;
+      const nextStatus = statusFlow[order.status];
+      if (!nextStatus) return;
+      update(ref(db, `vesta/orders/${firebaseKey}`), { status: nextStatus });
+    },
+
     addMenuItem: (item) => dispatch({ type: 'ADD_MENU_ITEM', payload: item }),
   };
 
