@@ -7,95 +7,86 @@ export default function MenuCard({ item }) {
   const { activeTable, addToCart, getTableCart, updateQty } = useRestaurant();
   const { t, lang } = useLanguage();
   const [imgError, setImgError] = useState(false);
-  const [ripple, setRipple] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   const cart = getTableCart(activeTable);
   const cartItem = cart.items.find(i => i.id === item.id);
   const qty = cartItem?.qty || 0;
 
-  const meta = CATEGORY_META[item.category] || { gradient: 'from-gray-100 to-gray-200', icon: '☕' };
+  const meta = CATEGORY_META[item.category] || { gradient: 'from-purple-100 to-purple-200', icon: '☕' };
   const displayName = lang === 'ar' ? (item.nameAr || item.name) : item.name;
   const displayDesc = lang === 'ar' ? (item.descriptionAr || item.description) : item.description;
-  const displayCategory = t(item.category);
 
   const handleAdd = () => {
     addToCart(activeTable, item);
-    setRipple(true);
-    setTimeout(() => setRipple(false), 400);
+    setAdding(true);
+    setTimeout(() => setAdding(false), 350);
   };
 
   return (
-    <div className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] flex flex-col border border-gray-100/80">
-      {/* Image */}
-      <div className={`relative overflow-hidden bg-gradient-to-br ${meta.gradient} flex-shrink-0`} style={{ aspectRatio: '4/3' }}>
-        {!imgError ? (
+    <div className={`bg-white rounded-2xl overflow-hidden flex flex-col card-shadow transition-all duration-300 active:scale-[0.97] ${qty > 0 ? 'ring-2 ring-purple-400/40' : ''}`}>
+
+      {/* ── IMAGE ── */}
+      <div className="relative overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
+        {!imgError && item.image ? (
           <img
             src={item.image}
             alt={displayName}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover"
             onError={() => setImgError(true)}
           />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
-            <span className="text-5xl opacity-50">{meta.icon}</span>
+            <span className="text-4xl opacity-60">{meta.icon}</span>
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
 
-        <div className="absolute top-3 left-3">
-          <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-purple-700 text-[10px] font-bold rounded-full shadow-sm uppercase tracking-wide">
-            {displayCategory}
-          </span>
+        {/* Name + Price on image */}
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <p className="text-white font-bold text-sm leading-tight line-clamp-1">{displayName}</p>
+          <p className="text-purple-300 font-black text-base mt-0.5">{CURRENCY} {item.price}</p>
         </div>
 
+        {/* Cart qty badge */}
         {qty > 0 && (
-          <div className="absolute top-3 right-3 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg animate-bounce-in">
+          <div className="absolute top-2.5 right-2.5 min-w-[26px] h-[26px] px-1.5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-black shadow-lg animate-bounce-in">
             {qty}
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h3 className="font-bold text-gray-900 text-sm leading-snug">{displayName}</h3>
-          <span className="text-purple-700 font-bold text-sm whitespace-nowrap flex-shrink-0">
-            {CURRENCY} {item.price}
-          </span>
-        </div>
-        <p className="text-gray-400 text-xs leading-relaxed flex-1 mb-4 line-clamp-2">
+      {/* ── BODY ── */}
+      <div className="p-3 flex flex-col flex-1">
+        {/* Description */}
+        <p className="text-gray-400 text-[11px] leading-relaxed line-clamp-2 flex-1 mb-3">
           {displayDesc}
         </p>
 
+        {/* Controls */}
         {qty === 0 ? (
           <button
             onClick={handleAdd}
-            className={`
-              relative w-full py-2.5 rounded-2xl text-sm font-semibold overflow-hidden
-              bg-purple-50 text-purple-700 border border-purple-200
-              hover:bg-purple-700 hover:text-white hover:border-purple-700 hover:shadow-md hover:shadow-purple-200
-              active:scale-95 transition-all duration-200
-              ${ripple ? 'scale-95' : ''}
-            `}
+            className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95
+              ${adding
+                ? 'bg-purple-700 text-white scale-95'
+                : 'bg-purple-50 text-purple-700 hover:bg-purple-700 hover:text-white'
+              }`}
           >
-            <span className="flex items-center justify-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              {t('addToOrder')}
-            </span>
+            + {t('addToOrder')}
           </button>
         ) : (
-          <div className="flex items-center justify-between bg-purple-700 rounded-2xl p-1 animate-scale-in">
+          <div className="flex items-center bg-purple-700 rounded-xl overflow-hidden animate-scale-in">
             <button
               onClick={() => updateQty(activeTable, item.id, -1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-lg transition-colors active:scale-90"
+              className="flex-1 py-2.5 text-white font-black text-lg hover:bg-purple-800 transition-colors active:scale-90 flex items-center justify-center"
             >−</button>
-            <span className="text-white font-bold text-sm px-3">{qty}</span>
+            <span className="text-white font-black text-sm w-8 text-center">{qty}</span>
             <button
               onClick={handleAdd}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-lg transition-colors active:scale-90"
+              className="flex-1 py-2.5 text-white font-black text-lg hover:bg-purple-800 transition-colors active:scale-90 flex items-center justify-center"
             >+</button>
           </div>
         )}
