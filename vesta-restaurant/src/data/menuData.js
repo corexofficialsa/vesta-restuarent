@@ -1,0 +1,86 @@
+export const CATEGORIES = ['Appetizers', 'Mains', 'Desserts & Drinks'];
+
+export const INITIAL_MENU = [
+  {
+    id: 1,
+    name: 'Samosa Chaat',
+    category: 'Appetizers',
+    price: 150,
+    description: 'Crispy samosas crushed and topped with spiced chickpeas, yogurt, sweet tamarind, and mint chutneys.',
+    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&q=80',
+  },
+  {
+    id: 2,
+    name: 'Amritsari Fish Fry',
+    category: 'Appetizers',
+    price: 320,
+    description: 'Spiced, batter-fried fish fillets infused with carom seeds and dark spices.',
+    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80',
+  },
+  {
+    id: 3,
+    name: 'Paneer Tikka',
+    category: 'Appetizers',
+    price: 280,
+    description: 'Cubes of cottage cheese marinated in spiced yogurt and grilled to perfection in a tandoor.',
+    image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&q=80',
+  },
+  {
+    id: 4,
+    name: 'Butter Chicken',
+    category: 'Mains',
+    price: 420,
+    description: 'Tender tandoori grilled chicken simmered in a velvety, creamy tomato-butter sauce.',
+    image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80',
+  },
+  {
+    id: 5,
+    name: 'Rogan Josh',
+    category: 'Mains',
+    price: 480,
+    description: 'Slow-cooked aromatic lamb curry infused with a signature blend of Kashmiri red chilies and spices.',
+    image: 'https://images.unsplash.com/photo-1574653853027-5382a3d23a15?w=400&q=80',
+  },
+  {
+    id: 6,
+    name: 'Dal Makhani',
+    category: 'Mains',
+    price: 240,
+    description: 'Creamy, slow-cooked black lentils and kidney beans, finished with fresh cream and white butter.',
+    image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80',
+  },
+  {
+    id: 7,
+    name: 'Jackfruit Biryani',
+    category: 'Mains',
+    price: 350,
+    description: 'Fragrant basmati rice layered with spiced raw jackfruit, saffron, caramelized onions, and fresh mint.',
+    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80',
+  },
+  {
+    id: 8,
+    name: 'Garlic Naan',
+    category: 'Mains',
+    price: 80,
+    description: 'Leavened tandoor-baked flatbread brushed liberally with minced garlic and melted butter.',
+    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&q=80',
+  },
+  {
+    id: 9,
+    name: 'Mango Lassi',
+    category: 'Desserts & Drinks',
+    price: 120,
+    description: 'A smooth, refreshing yogurt drink blended with sweet Alphonso mango pulp.',
+    image: 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=400&q=80',
+  },
+  {
+    id: 10,
+    name: 'Gulab Jamun',
+    category: 'Desserts & Drinks',
+    price: 140,
+    description: 'Warm, soft milk-solid dumplings fried and soaked in a delicate cardamom-infused sugar syrup.',
+    image: 'https://images.unsplash.com/photo-1666361000000-placeholder?w=400&q=80',
+  },
+];
+
+export const TABLES = [1, 2, 3, 4];
