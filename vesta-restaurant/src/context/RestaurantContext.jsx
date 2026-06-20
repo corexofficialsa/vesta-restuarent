@@ -1,7 +1,18 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import { ref, push, update, onValue } from 'firebase/database';
+import { ref, push, update, onValue, set, remove, get } from 'firebase/database';
 import { db } from '../firebase';
 import { INITIAL_MENU } from '../data/menuData';
+
+// Read URL table param synchronously — prevents the one-frame flash of login page
+function getInitialTable() {
+  const params = new URLSearchParams(window.location.search);
+  const t = params.get('table');
+  if (t) {
+    const id = parseInt(t, 10);
+    if ([1, 2, 3, 4].includes(id)) return id;
+  }
+  return null;
+}
 
 const savedAuth = localStorage.getItem('vesta_auth') === 'true';
 
@@ -9,22 +20,18 @@ const initialState = {
   menu: INITIAL_MENU,
   cart: {},
   orders: [],
-  activeTable: null,
+  activeTable: getInitialTable(),
   view: savedAuth ? 'admin' : 'customer',
   isAuthenticated: savedAuth,
 };
 
 function reducer(state, action) {
   switch (action.type) {
-
-    case 'SET_VIEW':
-      return { ...state, view: action.payload };
-
-    case 'SET_AUTH':
-      return { ...state, isAuthenticated: action.payload };
-
-    case 'SELECT_TABLE':
-      return { ...state, activeTable: action.payload };
+    case 'SET_VIEW':      return { ...state, view: action.payload };
+    case 'SET_AUTH':      return { ...state, isAuthenticated: action.payload };
+    case 'SELECT_TABLE':  return { ...state, activeTable: action.payload };
+    case 'SET_MENU':      return { ...state, menu: action.payload };
+    case 'SET_ORDERS':    return { ...state, orders: action.payload };
 
     case 'ADD_TO_CART': {
       const { tableId, item } = action.payload;
@@ -39,10 +46,7 @@ function reducer(state, action) {
     case 'REMOVE_FROM_CART': {
       const { tableId, itemId } = action.payload;
       const tableCart = state.cart[tableId] || { items: [] };
-      return {
-        ...state,
-        cart: { ...state.cart, [tableId]: { items: tableCart.items.filter(i => i.id !== itemId) } },
-      };
+      return { ...state, cart: { ...state.cart, [tableId]: { items: tableCart.items.filter(i => i.id !== itemId) } } };
     }
 
     case 'UPDATE_QTY': {
@@ -54,17 +58,9 @@ function reducer(state, action) {
       return { ...state, cart: { ...state.cart, [tableId]: { items: updatedItems } } };
     }
 
-    case 'SET_ORDERS':
-      return { ...state, orders: action.payload };
-
     case 'CLEAR_TABLE_CART': {
       const { tableId } = action.payload;
       return { ...state, cart: { ...state.cart, [tableId]: { items: [] } } };
-    }
-
-    case 'ADD_MENU_ITEM': {
-      const newItem = { ...action.payload, id: action.payload.id || Date.now(), price: Number(action.payload.price) };
-      return { ...state, menu: [...state.menu, newItem] };
     }
 
     default:
@@ -77,10 +73,34 @@ const RestaurantContext = createContext(null);
 export function RestaurantProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // ── Listen to Firebase orders in real-time ──
+  // ── Sync menu from Firebase (shared across all devices) ──
+  useEffect(() => {
+    const menuRef = ref(db, 'vesta/menu');
+
+    // Seed menu if Firebase is empty
+    get(menuRef).then(snapshot => {
+      if (!snapshot.exists()) {
+        const seed = {};
+        INITIAL_MENU.forEach(item => { seed[item.id] = item; });
+        set(menuRef, seed);
+      }
+    });
+
+    const unsubMenu = onValue(menuRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const menu = Object.values(data).sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+        dispatch({ type: 'SET_MENU', payload: menu });
+      }
+    });
+
+    return () => unsubMenu();
+  }, []);
+
+  // ── Sync orders from Firebase in real-time ──
   useEffect(() => {
     const ordersRef = ref(db, 'vesta/orders');
-    const unsubscribe = onValue(ordersRef, (snapshot) => {
+    const unsubOrders = onValue(ordersRef, (snapshot) => {
       const data = snapshot.val();
       if (!data) { dispatch({ type: 'SET_ORDERS', payload: [] }); return; }
       const orders = Object.entries(data)
@@ -88,7 +108,7 @@ export function RestaurantProvider({ children }) {
         .sort((a, b) => new Date(b.placedAt) - new Date(a.placedAt));
       dispatch({ type: 'SET_ORDERS', payload: orders });
     });
-    return () => unsubscribe();
+    return () => unsubOrders();
   }, []);
 
   const actions = {
@@ -138,7 +158,17 @@ export function RestaurantProvider({ children }) {
       update(ref(db, `vesta/orders/${firebaseKey}`), { status: nextStatus });
     },
 
-    addMenuItem: (item) => dispatch({ type: 'ADD_MENU_ITEM', payload: item }),
+    // Writes to Firebase — all devices see the new item instantly
+    addMenuItem: (item) => {
+      const id = Date.now();
+      const newItem = { ...item, id, price: Number(item.price) };
+      set(ref(db, `vesta/menu/${id}`), newItem);
+    },
+
+    // Removes from Firebase — disappears from all devices instantly
+    deleteMenuItem: (itemId) => {
+      remove(ref(db, `vesta/menu/${itemId}`));
+    },
   };
 
   const getTableCart = (tableId) => state.cart[tableId] || { items: [] };

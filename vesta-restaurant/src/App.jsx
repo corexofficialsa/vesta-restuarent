@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { RestaurantProvider, useRestaurant } from './context/RestaurantContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Header from './components/shared/Header';
@@ -8,18 +7,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import KitchenLoginPage from './pages/KitchenLoginPage';
 
 function AppContent() {
-  const { activeTable, selectTable, isAuthenticated } = useRestaurant();
+  const { activeTable, isAuthenticated } = useRestaurant();
   const { lang } = useLanguage();
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tableParam = params.get('table');
-    if (tableParam) {
-      const id = parseInt(tableParam, 10);
-      if ([1, 2, 3, 4].includes(id)) selectTable(id);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const renderContent = () => {
     if (activeTable) {
