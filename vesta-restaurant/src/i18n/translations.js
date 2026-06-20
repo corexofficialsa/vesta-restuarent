@@ -47,6 +47,7 @@ export const translations = {
     // Payment
     choosePayment: 'Choose Payment',
     payApple: 'Pay with Apple Pay',
+    paySamsung: 'Pay with Samsung Pay',
     orCard: 'or pay by card',
     mada: 'Mada',
     madaSub: 'Saudi debit card',
@@ -121,6 +122,7 @@ export const translations = {
     // Payment
     choosePayment: 'اختر طريقة الدفع',
     payApple: 'الدفع بـ Apple Pay',
+    paySamsung: 'الدفع بـ Samsung Pay',
     orCard: 'أو الدفع بالبطاقة',
     mada: 'مدى',
     madaSub: 'بطاقة خصم سعودية',
