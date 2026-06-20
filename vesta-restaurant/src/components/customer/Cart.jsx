@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { CURRENCY } from '../../data/menuData';
+import PaymentModal from './PaymentModal';
 
 export default function Cart() {
   const {
@@ -9,23 +10,17 @@ export default function Cart() {
   } = useRestaurant();
 
   const [open, setOpen] = useState(false);
-  const [placing, setPlacing] = useState(false);
-  const [ordered, setOrdered] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
 
   const cart = getTableCart(activeTable);
   const count = getCartCount(activeTable);
   const total = getCartTotal(activeTable);
   const vat = Math.round(total * 0.15);
 
-  const handlePlaceOrder = () => {
-    if (!cart.items.length) return;
-    setPlacing(true);
-    setTimeout(() => {
-      placeOrder(activeTable);
-      setPlacing(false);
-      setOrdered(true);
-      setTimeout(() => { setOrdered(false); setOpen(false); }, 2000);
-    }, 700);
+  const handlePaymentSuccess = () => {
+    placeOrder(activeTable);
+    setShowPayment(false);
+    setOpen(false);
   };
 
   return (
@@ -167,26 +162,11 @@ export default function Cart() {
             </div>
 
             <button
-              onClick={handlePlaceOrder}
-              disabled={placing || ordered}
-              className={`
-                w-full py-4 rounded-2xl font-bold text-sm transition-all duration-300
-                flex items-center justify-center gap-2
-                ${ordered
-                  ? 'bg-green-500 text-white'
-                  : placing
-                  ? 'bg-purple-400 text-white cursor-wait'
-                  : 'bg-purple-700 text-white hover:bg-purple-800 active:scale-95 shadow-lg shadow-purple-200'
-                }
-              `}
+              onClick={() => setShowPayment(true)}
+              className="w-full py-4 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-purple-700 text-white hover:bg-purple-800 active:scale-95 shadow-lg shadow-purple-200"
             >
-              {ordered ? (
-                <><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>Order Sent to Kitchen!</>
-              ) : placing ? (
-                <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Sending…</>
-              ) : (
-                <>Place Order · {CURRENCY} {total + vat}</>
-              )}
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+              Proceed to Payment · {CURRENCY} {total + vat}
             </button>
 
             <p className="text-center text-gray-400 text-[10px]">
@@ -195,6 +175,15 @@ export default function Cart() {
           </div>
         )}
       </aside>
+
+      {showPayment && (
+        <PaymentModal
+          total={total}
+          vat={vat}
+          onSuccess={handlePaymentSuccess}
+          onClose={() => setShowPayment(false)}
+        />
+      )}
     </>
   );
 }
