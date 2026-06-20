@@ -89,7 +89,7 @@ export default function TableAnalytics() {
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Total Spend</span>
-                  <span className="font-semibold text-purple-700">₹{table.totalSpend}</span>
+                  <span className="font-semibold text-purple-700">SR{table.totalSpend}</span>
                 </div>
               </div>
 

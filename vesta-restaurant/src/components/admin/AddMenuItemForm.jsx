@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
-import { CATEGORIES } from '../../data/menuData';
+import { CATEGORIES, CURRENCY } from '../../data/menuData';
 
 const EMPTY = { name: '', category: CATEGORIES[0], price: '', description: '', image: '' };
 
@@ -95,10 +95,10 @@ export default function AddMenuItemForm() {
           {/* Price */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-              Price (₹) *
+              Price (SR) *
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">₹</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">SR</span>
               <input
                 type="number"
                 min="1"
@@ -175,7 +175,7 @@ export default function AddMenuItemForm() {
             {form.name && (
               <div className="px-4 pb-4">
                 <p className="font-semibold text-gray-900 text-sm">{form.name}</p>
-                {form.price && <p className="text-purple-700 font-bold text-sm">₹{form.price}</p>}
+                {form.price && <p className="text-purple-700 font-bold text-sm">SR{form.price}</p>}
                 {form.description && <p className="text-gray-400 text-xs mt-1 line-clamp-2">{form.description}</p>}
               </div>
             )}
@@ -197,7 +197,7 @@ export default function AddMenuItemForm() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-900 truncate">{item.name}</p>
-                      <p className="text-xs text-purple-600">₹{item.price}</p>
+                      <p className="text-xs text-purple-600">SR{item.price}</p>
                     </div>
                     <span className="text-xs text-gray-400 bg-white px-1.5 py-0.5 rounded-md border border-gray-100">
                       {item.category.split(' ')[0]}

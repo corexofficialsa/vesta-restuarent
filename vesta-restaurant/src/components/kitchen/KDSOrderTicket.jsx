@@ -77,7 +77,7 @@ export default function KDSOrderTicket({ order }) {
               </span>
               <span className="text-gray-800 text-sm">{item.name}</span>
             </div>
-            <span className="text-gray-500 text-xs">₹{item.price * item.qty}</span>
+            <span className="text-gray-500 text-xs">SR{item.price * item.qty}</span>
           </div>
         ))}
       </div>
@@ -88,7 +88,7 @@ export default function KDSOrderTicket({ order }) {
           <span className="text-xs text-gray-400">
             {order.items.reduce((s, i) => s + i.qty, 0)} item{order.items.reduce((s, i) => s + i.qty, 0) !== 1 ? 's' : ''}
           </span>
-          <span className="font-bold text-gray-900 text-sm">₹{total}</span>
+          <span className="font-bold text-gray-900 text-sm">SR{total}</span>
         </div>
         <button
           onClick={() => advanceOrderStatus(order.id)}

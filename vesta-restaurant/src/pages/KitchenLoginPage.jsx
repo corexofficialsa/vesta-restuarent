@@ -31,7 +31,7 @@ export default function KitchenLoginPage() {
         <div className="flex flex-col items-center mb-8">
           <img src={logo} alt="Vesta" className="w-20 h-20 object-contain mb-4" />
           <h1 className="text-xl font-bold text-gray-900">Kitchen Staff Login</h1>
-          <p className="text-gray-400 text-sm mt-1">Vesta Restaurant · Operations</p>
+          <p className="text-gray-400 text-sm mt-1">Vesta Cafe · Operations</p>
         </div>
 
         {/* Card */}
